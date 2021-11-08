@@ -2,11 +2,44 @@ library(shiny)
 library(tidyverse)
 library(plotly)
 library(shinythemes)
+library(ukbabynames)
 
-###Read in data and round proportions
+##Read in the babynames data from the ukbabynames package
 
-mydata <- read_csv("~/Downloads/babynames.csv")
-mydata$prop <- round(mydata$prop, 5)
+mydata <-ukbabynames %>%
+  select(year, name,n, sex) %>%
+  group_by(year, sex) %>%
+  add_count(name = 'Total') %>%
+  ungroup() %>%
+  group_by(name, year, sex) %>%
+  summarise(n = sum(n),
+            Total = sum(Total)) %>%
+  ungroup() %>%
+  mutate(prop = round(n/Total,3)) %>%
+  filter(between(year, 2000, 2019)) -> mydata
+
+
+
+###Read in data from uk baby names package
+
+namemeanings <- read_csv("https://raw.githubusercontent.com/bsuthersan/babynames/master/namemeanings.csv")
+
+#Process and merge
+
+namemeanings <- namemeanings[ ,1:2]
+colnames(namemeanings) <- c("Name", "Meaning")
+
+namemeanings <- namemeanings %>%
+  mutate(Name = str_to_title(Name))
+
+mydata <- mydata %>%
+  left_join(namemeanings, by = c("name"="Name"))
+
+#Create a new variable, proportions, by year
+
+  
+  
+
 
 ##UI
 
